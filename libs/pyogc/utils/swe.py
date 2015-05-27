@@ -1,0 +1,2 @@
+class SWE(object):
+    pass

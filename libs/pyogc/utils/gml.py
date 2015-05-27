@@ -1,0 +1,2 @@
+class GML(object):
+    pass

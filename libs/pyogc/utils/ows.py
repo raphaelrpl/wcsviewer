@@ -1,0 +1,2 @@
+class OWS(object):
+    pass
