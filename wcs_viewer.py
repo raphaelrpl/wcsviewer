@@ -93,18 +93,8 @@ class WCSViewer:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('WCSViewer', message)
 
-
-    def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True,
+                   status_tip=None, whats_this=None, parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -190,10 +180,14 @@ class WCSViewer:
         del self.toolbar
 
     def start_wcs_request(self):
+        self.dlg.textOutput.setText("")
+        self.dlg.textOutput.append("Trying connect on \"%s\"" % self.dlg.lineEdit.text())
         self.wcs = WCS(url=self.dlg.lineEdit.text(), version="2.0.1")
         self.wcs.get_capabilities()
+        self.dlg.textOutput.append("Connection established.")
+        self.dlg.capabilitiesOutput.setText("")
+        self.dlg.capabilitiesOutput.append(self.wcs.data.content)
         # QMessageBox.information(self.iface.mainWindow(), "DEBUG:", )
-        self.dlg.textOutput.append(self.wcs.data.content)
 
     def run(self):
         """Run method that performs all the real work"""

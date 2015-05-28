@@ -20,6 +20,7 @@ class BaseWCS(object):
     def _get_data_from_server(self, method="GET", **parameters):
         parameters['service'] = self.service
         parameters['version'] = self.version
+        parameters['request'] = parameters.get('request')
         if method == "GET":
             self.data = requests.get(self.url, params=parameters)
         elif method == "POST":
