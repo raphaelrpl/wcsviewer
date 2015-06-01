@@ -25,6 +25,7 @@ import os
 
 from PyQt4 import QtGui, uic
 
+
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'wcs_viewer_dialog_base.ui'))
 

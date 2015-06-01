@@ -5,9 +5,8 @@ from utils import CoverageTableModel
 import sys
 
 
-my_array = [['00', '01', '02'],
-            ['10', '11', '12'],
-            ['20', '21', '22']]
+my_array = [['00', '01'],
+            ['10', '11']]
 
 
 class WCSWindow(QtGui.QWidget):
@@ -20,12 +19,18 @@ class WCSWindow(QtGui.QWidget):
         self.center()
         self.setWindowTitle('Center')
         tablemodel = CoverageTableModel(my_array, self)
-        tableview = QTableView()
-        tableview.setModel(tablemodel)
+        self.tableview = QTableView()
+        self.tableview.setModel(tablemodel)
         layout = QVBoxLayout(self)
-        layout.addWidget(tableview)
+        layout.addWidget(self.tableview)
         self.setLayout(layout)
         self.show()
+        self.tableview.doubleClicked.connect(self.coverageDoubleClick)
+
+    def coverageDoubleClick(self, mi):
+        row = mi.row()
+        col = mi.column()
+        print(row, col)
 
     def center(self):
         qr = self.frameGeometry()

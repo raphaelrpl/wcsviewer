@@ -169,6 +169,9 @@ class WCSViewer:
         self.clickTool = QgsMapToolEmitPoint(self.canvas)
         QObject.connect(self.dlg.sendRequestBtn, SIGNAL("clicked()"), self.start_wcs_request)
 
+        # Connect SciDB GetCoverage
+        QObject.connect(self.dlg.sendGetCoverage, SIGNAL("clicked()"), self.get_coverage)
+
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -187,7 +190,32 @@ class WCSViewer:
         self.dlg.textOutput.append("Connection established.")
         self.dlg.capabilitiesOutput.setText("")
         self.dlg.capabilitiesOutput.append(self.wcs.data.content)
+        self.dlg.comboCoverage.clear()
+        if self.wcs.xml:
+            coverages = self.wcs.xml.xpath(".//wcs:CoverageId", namespaces=self.wcs.xml.nsmap)
+        else:
+            coverages = []
+        for coverage in coverages:
+            self.dlg.comboCoverage.addItem(coverage.text)
         # QMessageBox.information(self.iface.mainWindow(), "DEBUG:", )
+
+    def get_coverage(self):
+        if not self.wcs:
+            QMessageBox.information(self.iface.mainWindow(), "Error", "Set configuration on \"Configuration\" tab")
+            return
+        self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText())
+        self.dlg.dataOutput.setText("")
+        self.dlg.dataOutput.append(self.wcs.values)
+        # if self.wcs.xml:
+        #     data = self.wcs.xml.xpath(".//tupleList", namespaces=self.wcs.xml.nsmap)
+        #     print(data)
+        #     if data:
+        #         content = data.text
+        #     else:
+        #         content = "ERROR"
+        #     self.dlg.dataOutput.setText("")
+        #     self.dlg.dataOutput.append(content)
+        #     return
 
     def run(self):
         """Run method that performs all the real work"""

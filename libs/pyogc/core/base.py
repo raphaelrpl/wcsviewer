@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from exceptions import WCSException, WCSRequestError, WCSInvalidParameter
+from lxml import etree
 import requests
 
 
@@ -8,6 +9,7 @@ class BaseWCS(object):
     url = None
     version = None
     service = "WCS"
+    xml = None
 
     def __init__(self, url="http://geobrain.laits.gmu.edu/cgi-bin/ows8/wcseo", version="2.0.1"):
         if not url:
@@ -27,6 +29,7 @@ class BaseWCS(object):
             self.data = requests.post(self.url, params=parameters)
         else:
             raise WCSRequestError("Invalid request method - \"%s\"" % method)
+        self.xml = etree.fromstring(self.data.content)
 
     def get_capabilities(self, **kwargs):
         self._get_data_from_server(request="GetCapabilities")

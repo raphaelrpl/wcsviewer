@@ -135,13 +135,62 @@
     <attribute name="title">
      <string>GetCoverage</string>
     </attribute>
-    <widget class="QListWidget" name="coveragesList">
+    <widget class="QComboBox" name="comboCoverage">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>20</y>
-       <width>597</width>
-       <height>181</height>
+       <x>20</x>
+       <y>60</y>
+       <width>281</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <item>
+      <property name="text">
+       <string>MCD43A4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>MOD09Q1</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_3">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>201</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>CoverageID:</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="sendGetCoverage">
+     <property name="geometry">
+      <rect>
+       <x>470</x>
+       <y>470</y>
+       <width>121</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>GetCoverage</string>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="dataOutput">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>130</y>
+       <width>571</width>
+       <height>321</height>
       </rect>
      </property>
     </widget>

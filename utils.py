@@ -2,7 +2,7 @@ from PyQt4.QtCore import QAbstractTableModel, QVariant, Qt
 
 
 class CoverageTableModel(QAbstractTableModel):
-    header_labels = ['Column 1', 'Column 2', 'Column 3', 'Column 4']
+    header_labels = ['Coverage', 'Period']
 
     def __init__(self, datain, parent=None, *args):
         QAbstractTableModel.__init__(self, parent)
