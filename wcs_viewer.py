@@ -203,9 +203,18 @@ class WCSViewer:
         if not self.wcs:
             QMessageBox.information(self.iface.mainWindow(), "Error", "Set configuration on \"Configuration\" tab")
             return
-        self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText())
+        self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), rangesubset="b1")
         self.dlg.dataOutput.setText("")
         self.dlg.dataOutput.append(self.wcs.values)
+        import pandas as pf
+        import numpy as np
+        import matplotlib.pyplot as plt
+        data_strings = self.wcs.values.split(',')
+        data = [int(e) for e in data_strings]
+        plt.plot(data)
+        plt.xlabel("Single Band series")
+        plt.show()
+
         # if self.wcs.xml:
         #     data = self.wcs.xml.xpath(".//tupleList", namespaces=self.wcs.xml.nsmap)
         #     print(data)
