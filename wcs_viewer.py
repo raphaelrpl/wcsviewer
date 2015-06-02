@@ -172,6 +172,9 @@ class WCSViewer:
         # Connect SciDB GetCoverage
         QObject.connect(self.dlg.sendGetCoverage, SIGNAL("clicked()"), self.get_coverage)
 
+        # Onchange ComboCoverage
+        QObject.connect(self.dlg.comboCoverage, SIGNAL("activated()"), )
+
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -181,6 +184,17 @@ class WCSViewer:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+
+    def get_bands(self, coverageID):
+        if not self.wcs:
+            QMessageBox.information(self.iface.mainWindow(), "Error", "Set configuration on \"Configuration\" tab")
+            return
+        self.wcs.describe_coverage(coverage_id=coverageID)
+        return []
+
+    def on_change_combo_coverage(self, obj):
+        bands = self.get_bands(coverageID=self.dlg.comboCoverage.currentText())
+        # ADD BANDS TO BANDSINPUT PLACEHOLDER
 
     def start_wcs_request(self):
         self.dlg.textOutput.setText("")

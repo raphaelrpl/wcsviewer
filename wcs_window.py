@@ -1,5 +1,5 @@
 from PyQt4 import QtGui
-from PyQt4.QtGui import QTableView
+from PyQt4.QtGui import QTableView, QComboBox
 from PyQt4.QtGui import QVBoxLayout
 from utils import CoverageTableModel
 import sys
@@ -26,11 +26,19 @@ class WCSWindow(QtGui.QWidget):
         self.setLayout(layout)
         self.show()
         self.tableview.doubleClicked.connect(self.coverageDoubleClick)
+        self.combobox = QComboBox()
+        self.combobox.addItem("AAAAA")
+        self.combobox.addItem("BBBBB")
+        layout.addWidget(self.combobox)
+        self.combobox.activated.connect(self.changedCombo)
 
     def coverageDoubleClick(self, mi):
         row = mi.row()
         col = mi.column()
         print(row, col)
+
+    def changedCombo(self, ob):
+        print(self.combobox.currentText())
 
     def center(self):
         qr = self.frameGeometry()
