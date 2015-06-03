@@ -22,7 +22,7 @@
 """
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, SIGNAL
 from PyQt4.QtCore import QObject
-from PyQt4.QtGui import QAction, QIcon, QMessageBox
+from PyQt4.QtGui import QAction, QIcon, QMessageBox, QToolTip, QFont
 # Initialize Qt resources from file resources.py
 from qgis._gui import QgsMapToolEmitPoint
 
@@ -167,13 +167,14 @@ class WCSViewer:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.clickTool = QgsMapToolEmitPoint(self.canvas)
+
         QObject.connect(self.dlg.sendRequestBtn, SIGNAL("clicked()"), self.start_wcs_request)
 
         # Connect SciDB GetCoverage
         QObject.connect(self.dlg.sendGetCoverage, SIGNAL("clicked()"), self.get_coverage)
 
         # Onchange ComboCoverage
-        QObject.connect(self.dlg.comboCoverage, SIGNAL("activated()"), )
+        QObject.connect(self.dlg.comboCoverage, SIGNAL("currentIndexChanged(int)"), self.on_change_combo_coverage)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -190,10 +191,19 @@ class WCSViewer:
             QMessageBox.information(self.iface.mainWindow(), "Error", "Set configuration on \"Configuration\" tab")
             return
         self.wcs.describe_coverage(coverage_id=coverageID)
-        return []
+        return self.wcs.attributes
 
     def on_change_combo_coverage(self, obj):
-        bands = self.get_bands(coverageID=self.dlg.comboCoverage.currentText())
+        print("TA AQUI")
+        data = self.get_bands(coverageID=self.dlg.comboCoverage.currentText())
+        if data:
+            for product_dct in data:
+                if product_dct.get('name') == self.dlg.comboCoverage.currentText():
+                    text = ",".join(product_dct['bands'])
+                    self.dlg.bandsInput.setPlaceholderText(text)
+                    self.dlg.bandsInput.setToolTip(text)
+                    break
+        print(data)
         # ADD BANDS TO BANDSINPUT PLACEHOLDER
 
     def start_wcs_request(self):
@@ -217,16 +227,42 @@ class WCSViewer:
         if not self.wcs:
             QMessageBox.information(self.iface.mainWindow(), "Error", "Set configuration on \"Configuration\" tab")
             return
-        self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), rangesubset="b1")
+        rangesubset = self.dlg.bandsInput.text()
+        if rangesubset:
+            self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), rangesubset=rangesubset)
+        else:
+            self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText())
         self.dlg.dataOutput.setText("")
         self.dlg.dataOutput.append(self.wcs.values)
-        import pandas as pf
-        import numpy as np
         import matplotlib.pyplot as plt
-        data_strings = self.wcs.values.split(',')
-        data = [int(e) for e in data_strings]
-        plt.plot(data)
-        plt.xlabel("Single Band series")
+        data_strings = ""
+
+        elements = self.wcs.values.split(',')
+        bands_values = [e.lstrip().split(' ') for e in elements]
+        print("BANDS Values")
+        print(bands_values)
+        bands_it = len(elements[0].split(' '))
+        print("BANDS IT")
+        print(bands_it)
+
+        # plot
+        figure = plt.figure()
+
+        for i in range(bands_it):
+            array = []
+            for element in bands_values:
+                array.append(int(element[i]))
+                data_strings += element[i].lstrip()
+
+            ax = figure.add_subplot(bands_it, 1, i)
+            ax.set_title('b1')
+            plt.plot(array)
+
+        """
+            ['20 40 60', '30 50 23', '32 12 46', '90 98 13']
+        """
+        # data = [int(e) for e in data_strings]
+        # plt.plot(data)
         plt.show()
 
         # if self.wcs.xml:
