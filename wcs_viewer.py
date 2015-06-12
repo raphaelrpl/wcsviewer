@@ -20,6 +20,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+from twisted.internet.tcp import _AbortingMixin
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, SIGNAL
 from PyQt4.QtCore import QObject
 from PyQt4.QtGui import QAction, QIcon, QMessageBox, QToolTip, QFont
@@ -35,6 +36,10 @@ import os.path
 
 # LIBS
 from libs.pyogc import WCS
+
+# matplot
+import matplotlib.pyplot as plt
+from mpldatacursor import datacursor
 
 
 class WCSViewer:
@@ -77,6 +82,8 @@ class WCSViewer:
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'WCSViewer')
         self.toolbar.setObjectName(u'WCSViewer')
+
+        self.wcs = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -205,6 +212,8 @@ class WCSViewer:
                     break
         print(data)
         # ADD BANDS TO BANDSINPUT PLACEHOLDER
+        self.dlg.startDateInput.setPlaceholderText(self.wcs.start_date)
+        self.dlg.endDateInput.setPlaceholderText(self.wcs.end_date)
 
     def start_wcs_request(self):
         self.dlg.textOutput.setText("")
@@ -227,54 +236,45 @@ class WCSViewer:
         if not self.wcs:
             QMessageBox.information(self.iface.mainWindow(), "Error", "Set configuration on \"Configuration\" tab")
             return
+        wcs_params = {}
         rangesubset = self.dlg.bandsInput.text()
         if rangesubset:
-            self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), rangesubset=rangesubset)
-        else:
-            self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText())
+            wcs_params['rangesubset'] = rangesubset
+            # self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), rangesubset=rangesubset)
+        start_date, end_date = self.dlg.startDateInput.text(), self.dlg.endDateInput.text()
+
+        if start_date and end_date:
+            wcs_params['subset'] = "time_id(%s,%s)" % (str(start_date), str(end_date))
+        self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), **wcs_params)
         self.dlg.dataOutput.setText("")
         self.dlg.dataOutput.append(self.wcs.values)
-        import matplotlib.pyplot as plt
+
         data_strings = ""
 
         elements = self.wcs.values.split(',')
         bands_values = [e.lstrip().split(' ') for e in elements]
-        print("BANDS Values")
-        print(bands_values)
+
         bands_it = len(elements[0].split(' '))
-        print("BANDS IT")
-        print(bands_it)
 
         # plot
-        figure = plt.figure()
+        # figure = plt.figure()
 
-        for i in range(bands_it):
+        for i in xrange(bands_it):
             array = []
             for element in bands_values:
                 array.append(int(element[i]))
                 data_strings += element[i].lstrip()
 
-            ax = figure.add_subplot(bands_it, 1, i)
-            ax.set_title('b1')
-            plt.plot(array)
+            # Uncomment next lines to enable one graph per band
+            # ax = figure.add_subplot(bands_it, 1, i)
+            # ax.set_title('b1')
+            # plt.plot(array)
 
-        """
-            ['20 40 60', '30 50 23', '32 12 46', '90 98 13']
-        """
-        # data = [int(e) for e in data_strings]
-        # plt.plot(data)
+            plt.plot(array, marker='o')
+
+        datacursor(hover=True)
+        self.dlg.dataOutput.setText(data_strings)
         plt.show()
-
-        # if self.wcs.xml:
-        #     data = self.wcs.xml.xpath(".//tupleList", namespaces=self.wcs.xml.nsmap)
-        #     print(data)
-        #     if data:
-        #         content = data.text
-        #     else:
-        #         content = "ERROR"
-        #     self.dlg.dataOutput.setText("")
-        #     self.dlg.dataOutput.append(content)
-        #     return
 
     def run(self):
         """Run method that performs all the real work"""

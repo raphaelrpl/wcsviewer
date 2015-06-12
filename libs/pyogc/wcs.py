@@ -1,6 +1,5 @@
 import xmltodict
 from core.base import BaseWCS
-from utils.tag import remove_attrs_in_dict
 
 
 class WCS(BaseWCS):
@@ -20,6 +19,11 @@ class WCS(BaseWCS):
                 coverage_dct['bands'] = []
                 range_type = coverage_desc.get('gmlcov:rangeType', {})
                 record = range_type.get('swe:DataRecord', {})
+                time_period = coverage_desc.get('gml:TimePeriod', {})
+
+                self.start_date = time_period.get('gml:beginPosition', None)
+                self.end_date = time_period.get('gml:endPosition', None)
+
                 fields = record.get('swe:field', {})
                 for field in fields:
                     # field = record[field_key]
@@ -30,7 +34,13 @@ class WCS(BaseWCS):
         self._get_data_from_server(coverageID=coverage_id, request="GetCoverage", **kwargs)
         dct = xmltodict.parse(self.data.content)
         if 'gmlcov:GridCoverage' in dct:
-            self.values = dct['gmlcov:GridCoverage']['gml:rangeSet']['gml:DataBlock']['gml:tupleList']['#text']
+            grid = dct['gmlcov:GridCoverage']
+            self.values = grid['gml:rangeSet']['gml:DataBlock']['gml:tupleList']['#text']
+            envelope = grid['gml:boundedBy']['gml:Envelope']
+            start_date_point = envelope['gml:lowerCorner'].split(' ')[-1]
+            end_date_point = envelope['gml:upperCorner'].split(' ')[-1]
+
+
             # self.values = values_string.lstrip().split(',')
         else:
             self.values = ""
@@ -38,3 +48,4 @@ class WCS(BaseWCS):
 
 wcs = WCS("http://127.0.0.1:8000/ows/", version="2.0.1")
 wcs.describe_coverage("mcd43a4")
+wcs.get_coverage("mcd43a4")
