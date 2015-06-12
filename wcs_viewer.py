@@ -36,6 +36,8 @@ import os.path
 
 # LIBS
 from libs.pyogc import WCS
+from dateutil import parser
+from datetime import timedelta
 
 # matplot
 import matplotlib.pyplot as plt
@@ -212,6 +214,8 @@ class WCSViewer:
                     break
         print(data)
         # ADD BANDS TO BANDSINPUT PLACEHOLDER
+        self.start_date = self.wcs.start_date
+        self.end_date = self.wcs.end_date
         self.dlg.startDateInput.setPlaceholderText(self.wcs.start_date)
         self.dlg.endDateInput.setPlaceholderText(self.wcs.end_date)
 
@@ -241,10 +245,11 @@ class WCSViewer:
         if rangesubset:
             wcs_params['rangesubset'] = rangesubset
             # self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), rangesubset=rangesubset)
-        start_date, end_date = self.dlg.startDateInput.text(), self.dlg.endDateInput.text()
+        start_date = self.dlg.startDateInput.text() or self.start_date
+        end_date = self.dlg.endDateInput.text() or self.end_date
 
-        if start_date and end_date:
-            wcs_params['subset'] = "time_id(%s,%s)" % (str(start_date), str(end_date))
+        wcs_params['subset'] = "time_id(%s,%s)" % (str(start_date), str(end_date))
+
         self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), **wcs_params)
         self.dlg.dataOutput.setText("")
         self.dlg.dataOutput.append(self.wcs.values)
@@ -256,8 +261,19 @@ class WCSViewer:
 
         bands_it = len(elements[0].split(' '))
 
-        # plot
+        # plot (use with subplot)
         # figure = plt.figure()
+
+        begin_date = parser.parse(start_date)
+        final_date = parser.parse(end_date)
+        dates = []
+        period = int(self.wcs.period)
+
+        while begin_date <= final_date:
+            dates.append(begin_date)
+            begin_date += timedelta(days=period)
+
+        print(dates)
 
         for i in xrange(bands_it):
             array = []

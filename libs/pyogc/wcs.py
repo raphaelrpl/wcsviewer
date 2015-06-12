@@ -3,6 +3,8 @@ from core.base import BaseWCS
 
 
 class WCS(BaseWCS):
+    envelope = {}
+
     def describe_coverage(self, coverage_id, **kwargs):
         self._get_data_from_server(coverageId=coverage_id, request="DescribeCoverage", **kwargs)
         dct = xmltodict.parse(self.data.content)
@@ -23,6 +25,7 @@ class WCS(BaseWCS):
 
                 self.start_date = time_period.get('gml:beginPosition', None)
                 self.end_date = time_period.get('gml:endPosition', None)
+                self.period = time_period.get('gml:timeInterval', None)
 
                 fields = record.get('swe:field', {})
                 for field in fields:
@@ -39,13 +42,12 @@ class WCS(BaseWCS):
             envelope = grid['gml:boundedBy']['gml:Envelope']
             start_date_point = envelope['gml:lowerCorner'].split(' ')[-1]
             end_date_point = envelope['gml:upperCorner'].split(' ')[-1]
-
-
+            self.envelope["time_period"] = [start_date_point, end_date_point]
             # self.values = values_string.lstrip().split(',')
         else:
             self.values = ""
 
-
-wcs = WCS("http://127.0.0.1:8000/ows/", version="2.0.1")
-wcs.describe_coverage("mcd43a4")
-wcs.get_coverage("mcd43a4")
+#
+# wcs = WCS("http://127.0.0.1:8000/ows/", version="2.0.1")
+# wcs.describe_coverage("mcd43a4")
+# wcs.get_coverage("mcd43a4")
