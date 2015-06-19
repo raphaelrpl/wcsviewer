@@ -218,6 +218,11 @@ class WCSViewer:
         self.end_date = self.wcs.end_date
         self.dlg.startDateInput.setPlaceholderText(self.wcs.start_date)
         self.dlg.endDateInput.setPlaceholderText(self.wcs.end_date)
+        self.dlg.colMin.setPlaceholderText(self.wcs.limits['col_id'][0])
+        self.dlg.colMax.setPlaceholderText(self.wcs.limits['col_id'][1])
+
+        self.dlg.rowMin.setPlaceholderText(self.wcs.limits['row_id'][0])
+        self.dlg.rowMax.setPlaceholderText(self.wcs.limits['row_id'][1])
 
     def start_wcs_request(self):
         self.dlg.textOutput.setText("")
@@ -242,15 +247,26 @@ class WCSViewer:
             return
         wcs_params = {}
         rangesubset = self.dlg.bandsInput.text()
+
+        col_min, col_max = self.dlg.colMin.text(), self.dlg.colMax.text()
+        row_min, row_max = self.dlg.rowMin.text(), self.dlg.rowMax.text()
+
         if rangesubset:
             wcs_params['rangesubset'] = rangesubset
+            print("OI")
             # self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), rangesubset=rangesubset)
+        print("FORA OI")
         start_date = self.dlg.startDateInput.text() or self.start_date
         end_date = self.dlg.endDateInput.text() or self.end_date
 
-        wcs_params['subset'] = "time_id(%s,%s)" % (str(start_date), str(end_date))
+        wcs_params['subset'] = [
+            "col_id(%s,%s)" % (str(col_min), str(col_max)),
+            "row_id(%s,%s)" % (str(row_min), str(row_max)),
+            "time_id(%s,%s)" % (str(start_date), str(end_date))]
+        print("PARAMS SUBSET")
 
         self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), **wcs_params)
+        print("GETADO")
         self.dlg.dataOutput.setText("")
         self.dlg.dataOutput.append(self.wcs.values)
 

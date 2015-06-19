@@ -4,6 +4,7 @@ from core.base import BaseWCS
 
 class WCS(BaseWCS):
     envelope = {}
+    limits = {}
 
     def describe_coverage(self, coverage_id, **kwargs):
         self._get_data_from_server(coverageId=coverage_id, request="DescribeCoverage", **kwargs)
@@ -19,6 +20,14 @@ class WCS(BaseWCS):
                 coverage_desc = dct['wcs:CoverageDescriptions'][coverage_key]
                 coverage_dct['name'] = coverage_desc['@id']
                 coverage_dct['bands'] = []
+
+                bounded_by = coverage_desc.get('gml:boundedBy', {})
+                envelope = bounded_by.get('gml:Envelope', {})
+                labels = envelope.get('@axisLabels', '').split(' ')
+                lower_corner = envelope.get('gml:lowerCorner', "").split(' ')
+                upper_corner = envelope.get('gml:upperCorner', "").split(' ')
+                self.limits[labels[0]] = [lower_corner[0], upper_corner[0]]
+                self.limits[labels[1]] = [lower_corner[1], upper_corner[1]]
                 range_type = coverage_desc.get('gmlcov:rangeType', {})
                 record = range_type.get('swe:DataRecord', {})
                 time_period = coverage_desc.get('gml:TimePeriod', {})
@@ -48,6 +57,6 @@ class WCS(BaseWCS):
             self.values = ""
 
 #
-# wcs = WCS("http://127.0.0.1:8000/ows/", version="2.0.1")
-# wcs.describe_coverage("mcd43a4")
-# wcs.get_coverage("mcd43a4")
+wcs = WCS("http://127.0.0.1:8000/ows/", version="2.0.1")
+wcs.describe_coverage("mcd43a4")
+wcs.get_coverage("mcd43a4")
