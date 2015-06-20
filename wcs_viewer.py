@@ -20,9 +20,10 @@
  *                                                                         *
  ***************************************************************************/
 """
+from twisted.internet.tcp import _AbortingMixin
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, SIGNAL
 from PyQt4.QtCore import QObject
-from PyQt4.QtGui import QAction, QIcon, QMessageBox
+from PyQt4.QtGui import QAction, QIcon, QMessageBox, QToolTip, QFont
 # Initialize Qt resources from file resources.py
 from qgis._gui import QgsMapToolEmitPoint
 
@@ -35,6 +36,12 @@ import os.path
 
 # LIBS
 from libs.pyogc import WCS
+from dateutil import parser
+from datetime import timedelta
+
+# matplot
+import matplotlib.pyplot as plt
+from mpldatacursor import datacursor
 
 
 class WCSViewer:
@@ -78,6 +85,8 @@ class WCSViewer:
         self.toolbar = self.iface.addToolBar(u'WCSViewer')
         self.toolbar.setObjectName(u'WCSViewer')
 
+        self.wcs = None
+
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -93,18 +102,8 @@ class WCSViewer:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('WCSViewer', message)
 
-
-    def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True,
+                   status_tip=None, whats_this=None, parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -177,7 +176,14 @@ class WCSViewer:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.clickTool = QgsMapToolEmitPoint(self.canvas)
+
         QObject.connect(self.dlg.sendRequestBtn, SIGNAL("clicked()"), self.start_wcs_request)
+
+        # Connect SciDB GetCoverage
+        QObject.connect(self.dlg.sendGetCoverage, SIGNAL("clicked()"), self.get_coverage)
+
+        # Onchange ComboCoverage
+        QObject.connect(self.dlg.comboCoverage, SIGNAL("currentIndexChanged(int)"), self.on_change_combo_coverage)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -189,11 +195,118 @@ class WCSViewer:
         # remove the toolbar
         del self.toolbar
 
+    def get_bands(self, coverageID):
+        if not self.wcs:
+            QMessageBox.information(self.iface.mainWindow(), "Error", "Set configuration on \"Configuration\" tab")
+            return
+        self.wcs.describe_coverage(coverage_id=coverageID)
+        return self.wcs.attributes
+
+    def on_change_combo_coverage(self, obj):
+        print("TA AQUI")
+        data = self.get_bands(coverageID=self.dlg.comboCoverage.currentText())
+        if data:
+            for product_dct in data:
+                if product_dct.get('name') == self.dlg.comboCoverage.currentText():
+                    text = ",".join(product_dct['bands'])
+                    self.dlg.bandsInput.setPlaceholderText(text)
+                    self.dlg.bandsInput.setToolTip(text)
+                    break
+        print(data)
+        # ADD BANDS TO BANDSINPUT PLACEHOLDER
+        self.start_date = self.wcs.start_date
+        self.end_date = self.wcs.end_date
+        self.dlg.startDateInput.setPlaceholderText(self.wcs.start_date)
+        self.dlg.endDateInput.setPlaceholderText(self.wcs.end_date)
+        self.dlg.colMin.setPlaceholderText(self.wcs.limits['col_id'][0])
+        self.dlg.colMax.setPlaceholderText(self.wcs.limits['col_id'][1])
+
+        self.dlg.rowMin.setPlaceholderText(self.wcs.limits['row_id'][0])
+        self.dlg.rowMax.setPlaceholderText(self.wcs.limits['row_id'][1])
+
     def start_wcs_request(self):
+        self.dlg.textOutput.setText("")
+        self.dlg.textOutput.append("Trying connect on \"%s\"" % self.dlg.lineEdit.text())
         self.wcs = WCS(url=self.dlg.lineEdit.text(), version="2.0.1")
         self.wcs.get_capabilities()
+        self.dlg.textOutput.append("Connection established.")
+        self.dlg.capabilitiesOutput.setText("")
+        self.dlg.capabilitiesOutput.append(self.wcs.data.content)
+        self.dlg.comboCoverage.clear()
+        if self.wcs.xml:
+            coverages = self.wcs.xml.xpath(".//wcs:CoverageId", namespaces=self.wcs.xml.nsmap)
+        else:
+            coverages = []
+        for coverage in coverages:
+            self.dlg.comboCoverage.addItem(coverage.text)
         # QMessageBox.information(self.iface.mainWindow(), "DEBUG:", )
-        self.dlg.textOutput.append(self.wcs.data.content)
+
+    def get_coverage(self):
+        if not self.wcs:
+            QMessageBox.information(self.iface.mainWindow(), "Error", "Set configuration on \"Configuration\" tab")
+            return
+        wcs_params = {}
+        rangesubset = self.dlg.bandsInput.text()
+
+        col_min, col_max = self.dlg.colMin.text(), self.dlg.colMax.text()
+        row_min, row_max = self.dlg.rowMin.text(), self.dlg.rowMax.text()
+
+        if rangesubset:
+            wcs_params['rangesubset'] = rangesubset
+            print("OI")
+            # self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), rangesubset=rangesubset)
+        print("FORA OI")
+        start_date = self.dlg.startDateInput.text() or self.start_date
+        end_date = self.dlg.endDateInput.text() or self.end_date
+
+        wcs_params['subset'] = [
+            "col_id(%s,%s)" % (str(col_min), str(col_max)),
+            "row_id(%s,%s)" % (str(row_min), str(row_max)),
+            "time_id(%s,%s)" % (str(start_date), str(end_date))]
+        print("PARAMS SUBSET")
+
+        self.wcs.get_coverage(coverage_id=self.dlg.comboCoverage.currentText(), **wcs_params)
+        print("GETADO")
+        self.dlg.dataOutput.setText("")
+        self.dlg.dataOutput.append(self.wcs.values)
+
+        data_strings = ""
+
+        elements = self.wcs.values.split(',')
+        bands_values = [e.lstrip().split(' ') for e in elements]
+
+        bands_it = len(elements[0].split(' '))
+
+        # plot (use with subplot)
+        # figure = plt.figure()
+
+        begin_date = parser.parse(start_date)
+        final_date = parser.parse(end_date)
+        dates = []
+        period = int(self.wcs.period)
+
+        while begin_date <= final_date:
+            dates.append(begin_date)
+            begin_date += timedelta(days=period)
+
+        print(dates)
+
+        for i in xrange(bands_it):
+            array = []
+            for element in bands_values:
+                array.append(int(element[i]))
+                data_strings += element[i].lstrip()
+
+            # Uncomment next lines to enable one graph per band
+            # ax = figure.add_subplot(bands_it, 1, i)
+            # ax.set_title('b1')
+            # plt.plot(array)
+
+            plt.plot(array, marker='o')
+
+        datacursor(hover=True)
+        self.dlg.dataOutput.setText(data_strings)
+        plt.show()
 
     def run(self):
         """Run method that performs all the real work"""
