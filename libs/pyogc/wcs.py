@@ -1,5 +1,6 @@
 import xmltodict
 from core.base import BaseWCS
+from libs.pyogc.ogc.gml.gml import *
 
 
 class WCS(BaseWCS):
@@ -8,6 +9,18 @@ class WCS(BaseWCS):
 
     def describe_coverage(self, coverage_id, **kwargs):
         self._get_data_from_server(coverageId=coverage_id, request="DescribeCoverage", **kwargs)
+
+        # order(self.xml)
+        for element in self.xml.iter():
+            if element.prefix.lower() == "gml":
+                # GML Elements
+                namespace = "{%s}" % element.nsmap['gml'].lower()
+                # obj = GMLBase.initialize_elements(element)
+
+                if "%s%s" % (namespace, "boundedby") in element.tag.lower():
+                    self.bounded_by = GMLBoundedBy(element)
+                print(element)
+
         dct = xmltodict.parse(self.data.content)
         # remove_attrs_in_dict(dct)
         self.attributes = []
@@ -57,6 +70,7 @@ class WCS(BaseWCS):
             self.values = ""
 
 #
-wcs = WCS("http://127.0.0.1:8000/ows/", version="2.0.1")
-wcs.describe_coverage("mcd43a4")
-wcs.get_coverage("mcd43a4")
+if __name__ == "__main__":
+    wcs = WCS("http://127.0.0.1:8000/ows/", version="2.0.1")
+    wcs.describe_coverage("mcd43a4")
+# wcs.get_coverage("mcd43a4")

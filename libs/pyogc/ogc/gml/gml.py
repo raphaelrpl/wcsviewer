@@ -3,22 +3,23 @@ from libs.pyogc.ogc.gml.base import GMLRangeBase, GMLBase
 
 
 class GMLLowerCorner(GMLRangeBase):
-    pass
+    xml_tag = "lowerCorner"
 
 
 class GMLUpperCorner(GMLRangeBase):
-    pass
+    xml_tag = "upperCorner"
 
 
 class GMLLow(GMLRangeBase):
-    pass
+    xml_tag = "low"
 
 
 class GMLHigh(GMLRangeBase):
-    pass
+    xml_tag = "high"
 
 
 class GMLTupleList(GMLBase):
+    xml_tag = "tupleList"
     delimiter_band = " "
     delimiter_data = ","
 
@@ -44,10 +45,12 @@ class GMLTupleList(GMLBase):
         super(GMLTupleList, self).__init__(**attrs)
 
 class GMLDataBlock(GMLBase):
-    pass
+    xml_tag = "DataBlock"
 
 
 class GMLRangeSet(GMLBase):
+    xml_tag = "rangeSet"
+
     def __init__(self, data):
         attrs = {}
         if isinstance(data, dict):
@@ -56,10 +59,12 @@ class GMLRangeSet(GMLBase):
 
 
 class GMLGrid(GMLBase):
-    pass
+    xml_tag = "Grid"
 
 
 class GMLEnvelope(GMLBase):
+    xml_tag = "Envelope"
+
     def __init__(self, data, **attributes):
         super(GMLEnvelope, self).__init__(**attributes)
         if isinstance(data, dict):
@@ -70,6 +75,28 @@ class GMLEnvelope(GMLBase):
             self.data = data
 
             self._init_limits(min_value, max_value)
+        elif hasattr(data, "getparent"):
+            for node in data:
+                namespace = "{%s}" % node.nsmap['gml'].lower()
+                if ("%s" % namespace + "lowercorner") == node.tag.lower():
+                    node_name, attribs = self._prepare_node(node, namespace)
+                    setattr(self, self._format_attr(node_name), GMLLowerCorner(node))
+                elif ("%s" % namespace + "uppercorner") == node.tag.lower():
+                    node_name, attribs = self._prepare_node(node, namespace)
+                    setattr(self, self._format_attr(node_name), GMLUpperCorner(node))
+                elif ("%s" % namespace + "low") == node.tag.lower():
+                    node_name, attribs = self._prepare_node(node, namespace)
+                    setattr(self, self._format_attr(node_name), GMLLowerCorner(node))
+                elif ("%s" % namespace + "high") == node.tag.lower():
+                    node_name, attribs = self._prepare_node(node, namespace)
+                    setattr(self, self._format_attr(node_name), GMLUpperCorner(node))
+                else:
+                    raise GMLValueError("Error: Invalid type")
+
+    def _prepare_node(self, node, namespace):
+        attribs = node.attrib
+        node_name = node.tag.replace(namespace, '')
+        return node_name, attribs
 
     def _init_limits(self, min_value, max_value):
         self.lower = GMLLowerCorner(min_value)
@@ -77,9 +104,26 @@ class GMLEnvelope(GMLBase):
 
 
 class GMLGridEnvelope(GMLEnvelope):
+    xml_tag = "GridEnvelope"
+
     def _init_limits(self, min_value, max_value):
         self.low = GMLLow(min_value)
         self.high = GMLHigh(max_value)
+
+
+class GMLBoundedBy(GMLBase):
+    xml_tag = "boundedBy"
+
+    def __init__(self, data):
+        attrs = {}
+        super(GMLBoundedBy, self).__init__(**attrs)
+        # TODO: check if instance is element
+        if hasattr(data, "getchildren"):
+            for node in data:
+                namespace = node.nsmap['gml'].lower()
+                if "{%s}%s" % (namespace, "envelope") in node.tag.lower():
+                    attribs = node.attrib
+                    self.envelope = GMLEnvelope(node, **attribs)
 
 
 # Dummy Data
@@ -103,8 +147,8 @@ dct = {
 
 bands = ["red", "nir", "quality"]
 
-envelope = GMLEnvelope(data=data, **{"href": "google.com"})
-grid_envelope = GMLGridEnvelope(data, **{"href": "google.com"})
-
-tuple_list = GMLTupleList(dct, bands)
-print(envelope)
+# envelope = GMLEnvelope(data=data, **{"href": "google.com"})
+# grid_envelope = GMLGridEnvelope(data, **{"href": "google.com"})
+#
+# tuple_list = GMLTupleList(dct, bands)
+# print(envelope)
