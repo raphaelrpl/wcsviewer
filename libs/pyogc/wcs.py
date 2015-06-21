@@ -11,15 +11,17 @@ class WCS(BaseWCS):
         self._get_data_from_server(coverageId=coverage_id, request="DescribeCoverage", **kwargs)
 
         # order(self.xml)
-        for element in self.xml.iter():
-            if element.prefix.lower() == "gml":
+        for element in self.xml.getchildren():
+            # if element.prefix.lower() == "gml":
                 # GML Elements
-                namespace = "{%s}" % element.nsmap['gml'].lower()
-                # obj = GMLBase.initialize_elements(element)
+                # namespace = "{%s}" % element.nsmap['gml'].lower()
+            objs = GMLBase.initialize_elements(element)
+            for obj in objs:
+                setattr(self, GMLBase.format_attr(obj.xml_tag), obj)
 
-                if "%s%s" % (namespace, "boundedby") in element.tag.lower():
-                    self.bounded_by = GMLBoundedBy(element)
-                print(element)
+                # if "%s%s" % (namespace, "boundedby") in element.tag.lower():
+                #     self.bounded_by = GMLBoundedBy(element)
+                # print(element)
 
         dct = xmltodict.parse(self.data.content)
         # remove_attrs_in_dict(dct)

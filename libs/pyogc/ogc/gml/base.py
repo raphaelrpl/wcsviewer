@@ -8,20 +8,20 @@ class GMLBase(object):
         self.attributes = attributes
 
     @classmethod
-    def _format_attr(cls, attr):
+    def format_attr(cls, attr):
         validator = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
         return validator.sub(r'_\1', attr).lower()
 
     @classmethod
     def initialize_elements(cls, element):
-        obj = None
+        objs = []
         for node in element:
             namespace = "{%s}" % node.nsmap['gml']
             for klass in type.__subclasses__(GMLBase):
                 if namespace + klass.xml_tag == node.tag:
                     # initialize class
-                    obj = klass(node, **node.attrib)
-        return obj
+                    objs.append(klass(node, **node.attrib))
+        return objs
 
 
 class GMLRangeBase(GMLBase):
