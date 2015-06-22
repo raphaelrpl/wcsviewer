@@ -24,7 +24,7 @@ class GMLBase(object):
         return objs
 
 
-class GMLRangeBase(GMLBase):
+class GMLRangeBase(GMLBase, list):
     def __init__(self, limits):
         attrs = {}
         if isinstance(limits, dict):
@@ -41,5 +41,7 @@ class GMLRangeBase(GMLBase):
             self.limits = limits
         else:
             raise GMLValueError("Invalid type of limits. Expected a string or iterable. Got {0}".format(limits))
+        GMLBase.__init__(self, **attrs)
+        list.__init__(self, self.limits)
 
-        super(GMLRangeBase, self).__init__(**attrs)
+        # super(GMLRangeBase, self).__init__(**attrs)
