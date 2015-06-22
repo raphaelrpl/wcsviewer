@@ -15,6 +15,23 @@ class GMLBase(object):
     @classmethod
     def initialize_elements(cls, element):
         objs = []
+        gml_elements = element.xpath('//gml:*', namespaces={"gml": "http://www.opengis.net/gml/3.2"})
+
+        gml_list = []
+
+        base_classes_list = type.__subclasses__(GMLBase) + type.__subclasses__(GMLRangeBase)
+
+        for elm in gml_elements:
+            namespace = "{%s}" % elm.nsmap['gml']
+            for klass in base_classes_list:
+                if namespace + klass.xml_tag == elm.tag:
+                    # initialize class
+                    gml_list.append(klass(elm, **elm.attrib))
+                    break
+
+        for obj in gml_list:
+            print(obj)
+
         for node in element:
             namespace = "{%s}" % node.nsmap['gml']
             for klass in type.__subclasses__(GMLBase):
@@ -24,7 +41,7 @@ class GMLBase(object):
         return objs
 
 
-class GMLRangeBase(GMLBase, list):
+class GMLRangeBase(list):
     def __init__(self, limits):
         attrs = {}
         if isinstance(limits, dict):
@@ -32,16 +49,17 @@ class GMLRangeBase(GMLBase, list):
             limits = limits.get('values', "").split(' ')
         elif hasattr(limits, 'getchildren'):
             # node element
+            self.element = limits
             attrs.update(limits.attrib)
             limits = limits.text
 
         if isinstance(limits, basestring):
-            self.limits = limits.split(' ')
+            limits = limits.split(' ')
         elif isinstance(limits, list) or isinstance(limits, tuple) or isinstance(limits, set):
-            self.limits = limits
+            limits = limits
         else:
             raise GMLValueError("Invalid type of limits. Expected a string or iterable. Got {0}".format(limits))
-        GMLBase.__init__(self, **attrs)
-        list.__init__(self, self.limits)
+        super(GMLRangeBase, self).__init__(limits)
+        # GMLBase.__init__(self, **attrs)
 
         # super(GMLRangeBase, self).__init__(**attrs)
