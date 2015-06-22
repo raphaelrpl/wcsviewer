@@ -31,9 +31,9 @@ class GMLTupleList(GMLBase):
             self.delimiter_data = data.get('ts', self.delimiter_data)
             values = (data.get("values", "") or data.get('text', "")).split(self.delimiter_data)
             output = {}
-            if bands is not None:
+            if bands_name is not None:
                 cont = 0
-                for band in bands:
+                for band in bands_name:
                     output[band] = []
                     for row in values:
                         values_band_list = row.lstrip(' ').split(self.delimiter_band)
