@@ -17,7 +17,7 @@ class SWEBase(object):
 
 
 class SWEList(SWEBase, list):
-    def __init__(self, iterable=None, **attributes):
+    def __init__(self, iterable, **attributes):
         SWEBase.__init__(self, **attributes)
         list.__init__(self, iterable)
         self.attributes = attributes

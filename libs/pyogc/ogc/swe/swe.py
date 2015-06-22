@@ -20,6 +20,8 @@ class SWEInterval(SWEList):
         if hasattr(data, 'getparent'):
             attribs.update(data.attrib)
             iterable = data.text.split(' ')
+        if isinstance(data, basestring) or isinstance(data, list):
+            iterable = data
         super(SWEInterval, self).__init__(iterable, **attribs)
 
 
@@ -30,6 +32,28 @@ class SWEConstraint(SWEBase):
 class SWEAllowedValues(SWEBase):
     xml_tag = "AllowedValues"
 
+    def __init__(self, data):
+        attrs = {}
+        if hasattr(data, "getparent"):
+            attrs.update(data.attrib)
+            limit = []
+        elif isinstance(data, dict):
+            limit = data.get('interval', [])
+        else:
+            raise ValueError()
+        setattr(self, "interval", SWEInterval(limit))
+        super(SWEAllowedValues, self).__init__(**attrs)
+
 
 class SWEDataRecord(SWEBase):
     xml_tag = "DataRecord"
+
+
+if __name__ == "__main__":
+    from lxml.etree import Element
+    root = Element("root")
+    root.text = "0 76000"
+    # interval = SWEInterval(root)
+    allow = SWEAllowedValues(root)
+    print(9900)
+    # print(interval)
