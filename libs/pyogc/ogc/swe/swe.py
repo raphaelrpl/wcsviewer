@@ -1,4 +1,5 @@
 from libs.pyogc.ogc.swe.base import SWEBase, SWEList
+from libs.pyogc.ogc.swe.exceptions import SWEValueError
 
 
 class SWEField(SWEBase):
@@ -36,11 +37,11 @@ class SWEAllowedValues(SWEBase):
         attrs = {}
         if hasattr(data, "getparent"):
             attrs.update(data.attrib)
-            limit = []
+            limit = data
         elif isinstance(data, dict):
             limit = data.get('interval', [])
         else:
-            raise ValueError()
+            raise SWEValueError("Invalid value passed. It must be a lxml.Element or dict.")
         setattr(self, "interval", SWEInterval(limit))
         super(SWEAllowedValues, self).__init__(**attrs)
 
