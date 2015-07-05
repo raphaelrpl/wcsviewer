@@ -3,6 +3,7 @@ import re
 
 class GMLBase(object):
     xml_tag = ""
+    element = None
 
     def __init__(self, **attributes):
         self.attributes = attributes
@@ -21,27 +22,33 @@ class GMLBase(object):
 
         base_classes_list = type.__subclasses__(GMLBase) + type.__subclasses__(GMLRangeBase)
 
-        for elm in gml_elements:
-            namespace = "{%s}" % elm.nsmap['gml']
-            for klass in base_classes_list:
-                if namespace + klass.xml_tag == elm.tag:
-                    # initialize class
-                    gml_list.append(klass(elm, **elm.attrib))
-                    break
+        # for elm in gml_elements:
+        #     namespace = "{%s}" % elm.nsmap['gml']
+        #     for klass in base_classes_list:
+        #         if namespace + klass.xml_tag == elm.tag:
+        #             # initialize class
+        #             gml_list.append(klass(elm, **elm.attrib))
+        #             break
+        #
+        # for obj in gml_list:
+        #     pointer = obj.element
+        #     while pointer is not None and pointer.prefix == "gml" and pointer.getparent():
+        #         print(pointer)
+        #         pointer = pointer.getparent()
 
-        for obj in gml_list:
-            print(obj)
+            # for gmlelement in gml_list:
 
         for node in element:
             namespace = "{%s}" % node.nsmap['gml']
             for klass in type.__subclasses__(GMLBase):
                 if namespace + klass.xml_tag == node.tag:
-                    # initialize class
                     objs.append(klass(node, **node.attrib))
         return objs
 
 
 class GMLRangeBase(list):
+    element = None
+
     def __init__(self, limits):
         attrs = {}
         if isinstance(limits, dict):
