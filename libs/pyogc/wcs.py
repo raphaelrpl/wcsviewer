@@ -1,3 +1,4 @@
+from libs.pyogc.ogc.swe.base import SWEBase
 import xmltodict
 from core.base import BaseWCS
 from libs.pyogc.ogc.gml.gml import *
@@ -12,16 +13,10 @@ class WCS(BaseWCS):
 
         # order(self.xml)
         for element in self.xml.getchildren():
-            # if element.prefix.lower() == "gml":
-                # GML Elements
-                # namespace = "{%s}" % element.nsmap['gml'].lower()
             objs = GMLBase.initialize_elements(element)
             for obj in objs:
                 setattr(self, GMLBase.format_attr(obj.xml_tag), obj)
-
-                # if "%s%s" % (namespace, "boundedby") in element.tag.lower():
-                #     self.bounded_by = GMLBoundedBy(element)
-                # print(element)
+            # swe_elements = SWEBase.initialize_elements(element)
 
         dct = xmltodict.parse(self.data.content)
         # remove_attrs_in_dict(dct)
