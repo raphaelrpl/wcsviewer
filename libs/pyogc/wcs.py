@@ -1,7 +1,6 @@
-from libs.pyogc.ogc.swe.base import SWEBase
 import xmltodict
 from core.base import BaseWCS
-from libs.pyogc.ogc.gml.gml import *
+from ogc.gml.gml import *
 
 
 class WCS(BaseWCS):

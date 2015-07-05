@@ -1,5 +1,5 @@
-from libs.pyogc.ogc.gml.exceptions import GMLValueError
-from libs.pyogc.ogc.gml.base import GMLRangeBase, GMLBase
+from .exceptions import GMLValueError
+from .base import GMLRangeBase, GMLBase
 
 
 class GMLLowerCorner(GMLRangeBase):

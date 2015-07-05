@@ -1,5 +1,5 @@
-from libs.pyogc.ogc.swe.base import SWEBase, SWEList
-from libs.pyogc.ogc.swe.exceptions import SWEValueError
+from .base import SWEBase, SWEList
+from .exceptions import SWEValueError
 
 
 class SWEField(SWEBase):

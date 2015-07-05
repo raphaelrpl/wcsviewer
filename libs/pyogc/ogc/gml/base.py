@@ -1,4 +1,4 @@
-from libs.pyogc.ogc.gml.exceptions import GMLValueError
+from .exceptions import GMLValueError
 import re
 
 class GMLBase(object):

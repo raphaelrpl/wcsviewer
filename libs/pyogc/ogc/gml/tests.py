@@ -1,6 +1,6 @@
 from unittest.case import TestCase
 from libs.pyogc.wcs import WCS
-from libs.pyogc.ogc.gml import GMLBoundedBy
+from .gml import GMLBoundedBy
 
 
 class GMLTest(TestCase):

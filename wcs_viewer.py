@@ -289,6 +289,7 @@ class WCSViewer:
             dates.append(begin_date)
             begin_date += timedelta(days=period)
 
+        import matplotlib.dates as mdates
         print(dates)
 
         for i in xrange(bands_it):
@@ -296,13 +297,19 @@ class WCSViewer:
             for element in bands_values:
                 array.append(int(element[i]))
                 data_strings += element[i].lstrip()
-
+            fact, remainder = divmod(len(array), len(dates))
+            if not remainder:
+                dts = sorted(dates * fact)
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+                # plt.gca().xaxis.set_major_locator(mdates.DayLocator())
+                plt.plot(dts, array)
+                plt.gcf().autofmt_xdate()
+            else:
+                plt.plot(array, marker='o')
             # Uncomment next lines to enable one graph per band
             # ax = figure.add_subplot(bands_it, 1, i)
             # ax.set_title('b1')
             # plt.plot(array)
-
-            plt.plot(array, marker='o')
 
         datacursor(hover=True)
         self.dlg.dataOutput.setText(data_strings)
